@@ -1,4 +1,5 @@
 ### I used https://github.com/drupol/my-own-nixpkgs to create this monorepo
+
 {
   description = "monorepo for testing things";
 
@@ -11,7 +12,7 @@
 
   outputs = inputs@{ self, nixpkgs, flake-parts, systems, ... }:
     let
-      pkgs = import nixpkgs {};
+      allSystems = ["x86_64-linux" "aarch64-linux"];
     in
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems = import systems;
@@ -23,12 +24,10 @@
         ./imports/formatter.nix
         ./imports/pkgs-all.nix
       ];
-    
-      nixosModules = {
-        "nix-monorepo" = { config, pkgs, ... }: {
-           option = {};
-           config = {};
-         };
-      };
+
+      packages = builtins.listToAttrs (map (system: {
+        name = system;
+        value = import ./imports/pkgs-all.nix { pkgs = import nixpkgs { inherit system; }; };
+      }) allSystems);
     };
 }
